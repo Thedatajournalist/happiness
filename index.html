@@ -123,7 +123,7 @@
 //				.text("Country ranked by happiness");
 
             chart.append("text")
-                .attr('x',margin+150)
+                .attr('x',margin+250)
                 .attr('y',margin+50)
                 .attr('class',"axis")
                 .attr('text-anchor',.5)
@@ -131,7 +131,7 @@
                 .text('2005-2007');
 
             chart.append("text")
-                .attr('x',width-margin-430)
+                .attr('x',width-margin-330)
                 .attr('y',margin+50)
                 .attr('class',"axis")
                 .attr('text-anchor',.5)
@@ -230,7 +230,7 @@
       .append("text")
       .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
       .classed("label start", true)
-      .attr("x", 250)
+      .attr("x", 350)
       .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
       //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
       .attr("xml:space", "preserve")
@@ -242,7 +242,7 @@
       .append("text")
       .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label  )})
       .classed("label start", true)
-      .attr("x", 250)
+      .attr("x", 350)
       .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
       //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
       .attr("xml:space", "preserve")
@@ -258,7 +258,7 @@
       .append("text")
       .filter(function(d){ return (d.label==top5data[4][0].label  || d.label==top5data[3][0].label || d.label==top5data[2][0].label    )})
       .classed("label start", true)
-      .attr("x", 250)
+      .attr("x", 350)
       .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
       //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
       .attr("xml:space", "preserve")
@@ -275,7 +275,7 @@
       .append("text")
       .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
       .classed("label end", true)
-      .attr("x", width-450)
+      .attr("x", width-350)
       .attr("y", function(d) {return d.endY/2+100;})
       //.attr("y", function(d,i) { var rounded = d3.round(d.end, 1); return slope(rounded) })
       .attr("xml:space", "preserve")
@@ -287,7 +287,7 @@
       .append("text")
       .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label  )})
       .classed("label end", true)
-      .attr("x", width-450)
+      .attr("x", width-350)
       .attr("y", function(d) {return d.endY/2+100;})
       //.attr("y", function(d,i) { var rounded = d3.round(d.end, 1); return slope(rounded) })
       .attr("xml:space", "preserve")
@@ -303,7 +303,7 @@
       .append("text")
       .filter(function(d){ return (d.label==top5data[4][0].label || d.label==top5data[3][0].label || d.label==top5data[2][0].label  )})
       .classed("label end", true)
-      .attr("x", width-450)
+      .attr("x", width-350)
       .attr("y", function(d) {return d.endY/2+100;})
       .attr("xml:space", "preserve")
       .style("font-size", "1.5em")
@@ -319,8 +319,8 @@
       .append("line")
         .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
       .classed("slope", function(d) { return d.start || d.end; })
-      .attr("x1", 260)
-      .attr("x2", width-460)
+      .attr("x1", 360)
+      .attr("x2", width-360)
       .attr("y1", function(d,i) {
         return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
       })
@@ -333,8 +333,8 @@
       .append("line")
         .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label )})
       .classed("slope", function(d) { return d.start || d.end; })
-      .attr("x1", 260)
-      .attr("x2", width-460)
+      .attr("x1", 360)
+      .attr("x2", width-360)
       .attr("y1", function(d,i) {
         return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
       })
@@ -350,8 +350,8 @@
         .filter(function(d){ return (d.label==top5data[4][0].label || d.label==top5data[3][0].label || d.label==top5data[2][0].label
  )})
       .classed("slope", function(d) { return d.start || d.end; })
-      .attr("x1", 260)
-      .attr("x2", width-460)
+      .attr("x1", 360)
+      .attr("x2", width-360)
       .attr("y1", function(d,i) {
         return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
       })
