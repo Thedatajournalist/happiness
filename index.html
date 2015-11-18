@@ -1,0 +1,390 @@
+<!DOCTYPE html>  
+<meta charset="utf-8">
+<html>
+<!-- paulirish.com/2008/conditional-stylesheets-vs-css-hacks-answer-neither/ --> 
+<!--[if lt IE 7 ]> <html lang="en" class="no-js ie6"> <![endif]-->
+<!--[if IE 7 ]>    <html lang="en" class="no-js ie7"> <![endif]-->
+<!--[if IE 8 ]>    <html lang="en" class="no-js ie8"> <![endif]-->
+<!--[if IE 9 ]>    <html lang="en" class="no-js ie9"> <![endif]-->
+<!--[if (gt IE 9)|!(IE)]><!--> <html lang="en" class="no-js"> <!--<![endif]-->
+<head>
+<!-- this slopegraph is inspired by Zbjornson's block #2573074 on bl.olks.org http://www.bl.ock.org/zbjornson/2573074/-->
+  
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" charset="utf-8">
+  <!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame 
+       Remove this if you use the .htaccess -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title>World Happiness Ranks</title>
+  <meta name="description" content="Slope Graph of the world happiness score">
+  <meta name="author" content="Stella Y. Wu">
+
+  <!--  Mobile viewport optimized: j.mp/bplateviewport -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Place favicon.ico & apple-touch-icon.png in the root of your domain and delete these references -->
+  <link rel="shortcut icon" href="/favicon.ico">
+  <link type="text/css" rel="stylesheet" href="css/style_slope.css" /> 
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <!--script src='ufo.js'></script-->
+</head>
+
+<body>
+<div id='project-header'>
+    <a href='http://www.thedatajournalist.com' target="_blank">
+    <!--img src="images/DJ_Logo4.jpeg" alt="tdj" width="180" height="170" align='right'/--></a>
+    <h1>Country Ranked by Happiness </h1>
+</div>
+
+<div id='description'>
+<p>Click on a country to highlight it &nbsp;         
+    <!--form> country:<input type="text" name="country"></form-->
+    <input type="button" class="button", value ="Reset" onClick="history.go(0)"></p>
+</div>
+
+<div id='graph-container'></div>
+
+<div id='footer'>
+    <p> Data sourced from the <a href='http://worldhappiness.report/' target="_blank"> World Happiness report 2015</a></br>
+    Made by <a href='http://stellaywu.com' target="_blank">Stella Y. Wu</a>, 2015</br>
+    <a href='http://www.thedatajournalist.com' target="_blank">The Data Jounalist</a></p>
+</div>
+
+
+  <script> 
+
+//javascript on slopegraph following bl.ocks.org/benvandyke/8482820
+
+    data = null;
+    d3.csv("happy_change_lat_lon.tsv", function(csv) {
+        data = csv;
+
+ //    console.log("CSV", csv);
+
+    var
+        // Extract names of countries from the dataset
+        countries = csv.map( function(d) { return d["country"] }),
+        // Extract country names and start/end values from the dataset
+        data = csv
+                .map ( function(d) {
+                        var r = {
+                          label: d["country"],
+                          start: parseFloat(d['score2007']),
+                          end: parseFloat(d['Ladder score']),
+                          change:parseFloat(d['Changes in ladder scores'])
+                        };
+//               console.log(r);
+                        return r;
+                      })                      
+        //Require countries to have both values present
+                .filter(function(d) { return (!isNaN(d.start) && !isNaN(d.end)); }),
+        // Extract the values for every country for both years in the dataset for the scale
+
+       values = data
+                      .map( function(d) { 
+                      return d3.round(d.start, 1); 
+                      })
+                      .filter( function(d) { 
+                      return d; 
+                      } )
+                      .concat(
+                        data
+                          .map( function(d) {
+                          return d3.round(d.end, 1);
+                           } )
+                          .filter( function(d) { return d; } )
+                      )
+                      .sort()
+                      .reverse(),
+        // Return true for countries without start/end values
+        missing = function(d) { return !d.start || !d.end; },
+        // Format values for labels
+        label_format = function(value) { return d3.format(".1f")(d3.round(value, 1)); },
+
+        font_size = 10,
+        margin = 10,
+//        bodywidth=document.getElementById("graph-container").clientWidth,
+//        width = bodywidth - margin,
+
+        width = 1100,
+//        width=document.getElementById("#graph-container").clientWidth,
+        height = countries.length * 1.8* font_size + margin,
+//        height = 2000,
+
+        chart = d3.select("#graph-container").append("svg")
+                   .attr("width", width)
+                   .attr("height", height);
+
+// country = svg in slope1.html, #chart=#graph-contrainer in slope1.html  		
+//			chart.append("text")
+//				.attr("x", width / 2)
+//				.attr("y", margin+10)
+//				.attr("class", "chart-title")
+//				.text("Country ranked by happiness");
+
+            chart.append("text")
+                .attr('x',margin+150)
+                .attr('y',margin+50)
+                .attr('class',"axis")
+                .attr('text-anchor',.5)
+                .attr('opacity', .7)
+                .text('2005-2007');
+
+            chart.append("text")
+                .attr('x',width-margin-430)
+                .attr('y',margin+50)
+                .attr('class',"axis")
+                .attr('text-anchor',.5)
+                .attr('opacity', .7)
+                .text('2012-2014');
+
+    // Scales and positioning
+
+    var slope = d3.scale.ordinal()
+                  .domain(values)
+                  .rangePoints([margin, height]);
+
+	//Go through the list of countries in order, adding additional space as necessary.
+
+	var min_h_spacing = 1.2 * font_size, // 1.2 is standard font height:line space ratio
+		previousY = 0,
+		thisY,
+		additionalSpacing;
+
+	//Preset the Y positions (necessary only for the lower side)
+	//These are used as suggested positions.	
+	data.forEach(function(d) {
+		d.startY = slope(d3.round(d.start,1));
+		d.endY = slope(d3.round(d.end,1));
+
+	});
+
+	//Loop over the higher side (right) values, adding space to both sides if there's a collision
+
+	data
+		.sort(function(a,b) {
+			if (a.end == b.end) return 0;
+			return (a.end < b.end) ? -1 : +1;
+		})
+		.forEach(function(d) {
+			thisY = d.endY; //position "suggestion"
+			additionalSpacing = d3.max([0, d3.min([(min_h_spacing - (thisY - previousY)), min_h_spacing])]);
+			//Adjust all Y positions lower than this end's original Y position by the delta offset to preserve slopes:
+			data.forEach(function(dd) {
+				if (dd.startY >= d.endY) dd.startY += additionalSpacing;
+				if (dd.endY >= d.endY) dd.endY += additionalSpacing;
+			});
+
+			previousY = thisY;
+		});
+
+	//Loop over the lower side (left) values, adding space to both sides if there's a collision
+	previousY = 0;
+	data
+		.sort(function(a,b) {
+			if (a.startY == b.startY) return 0;
+			return (a.startY < b.startY) ? -1 : +1;
+		})
+		.forEach(function(d) {
+			thisY = d.startY; //position "suggestion"
+
+			additionalSpacing = d3.max([0, d3.min([(min_h_spacing - (thisY - previousY)), min_h_spacing])]);
+			//Adjust all Y positions lower than this start's original Y position by the delta offset to preserve slopes:
+			data.forEach(function(dd) {
+				if (dd.endY >= d.startY) dd.endY += additionalSpacing;
+				if (dd.label != d.label && dd.startY >= d.startY) dd.startY += additionalSpacing;
+			});
+			previousY = thisY;
+		});
+		
+
+// select top5 and bottom 5 changes of scores and appy different css
+    var nestByName=d3.nest()
+        .key(function(d) { return d.change;});
+    var nameEntries=nestByName.entries(data.sort(function(a,b){return a.change-b.change}));       
+    var uniqueData=nameEntries.map(function(entry) {return entry.values;});
+//    var bottom1=uniqueData[0];
+
+    bottom5data=uniqueData.slice(0,5);
+    top5data=uniqueData.slice(Math.max(uniqueData.length-5,1));
+    restdata=uniqueData.slice(5,uniqueData.length-5)
+
+
+    // Countries
+    var country = chart.selectAll("g.country")
+                    .data( data )
+                    .enter()
+                    .append("g")
+                    .attr("class", "country")
+                    .classed("missing", function(d) { return missing(d); });
+
+
+
+//        console.log(country.filter(function(d){return (d.label=="Greece")}));
+//        console.log(country[0][0].__data__.label);
+//            console.log(top5data[4][0].label);
+    // ** Left column
+
+
+    country
+      .append("text")
+      .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
+      .classed("label start", true)
+      .attr("x", 250)
+      .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
+      //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
+      .attr("xml:space", "preserve")
+      .style("font-size", font_size)
+      .text(function(d) { return d.label+ " " + label_format(d.start); });
+
+//  bottoms
+    country
+      .append("text")
+      .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label  )})
+      .classed("label start", true)
+      .attr("x", 250)
+      .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
+      //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
+      .attr("xml:space", "preserve")
+      .style("font-size", "1.5em")
+      .style("font-weight", "bold")
+      .style("fill","#255c69")  //0000cc
+      .style("z-index","9999")
+      .style("opacity","1.0")
+      .text(function(d) { return d.label+ " " + label_format(d.start); });
+      
+// tops
+    country
+      .append("text")
+      .filter(function(d){ return (d.label==top5data[4][0].label  || d.label==top5data[3][0].label || d.label==top5data[2][0].label    )})
+      .classed("label start", true)
+      .attr("x", 250)
+      .attr("y", function(d) {return d.startY/2+100;})   //to stretch and move the label position
+      //.attr("y", function(d,i) { var rounded = d3.round(d.start, 1); return slope(rounded) })
+      .attr("xml:space", "preserve")
+      .style("font-size", "1.5em")
+      .style("font-weight", "bold")
+      .style("fill","#aa4639") //#cc0000
+      .style("opacity","1.0")
+      .text(function(d) { return d.label+ " " + label_format(d.start); });
+
+
+    // ** Right column
+
+    country
+      .append("text")
+      .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
+      .classed("label end", true)
+      .attr("x", width-450)
+      .attr("y", function(d) {return d.endY/2+100;})
+      //.attr("y", function(d,i) { var rounded = d3.round(d.end, 1); return slope(rounded) })
+      .attr("xml:space", "preserve")
+      .style("font-size", font_size)
+      .text(function(d) { return label_format(d.end) + " " + d.label; });
+
+//  bottoms
+    country
+      .append("text")
+      .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label  )})
+      .classed("label end", true)
+      .attr("x", width-450)
+      .attr("y", function(d) {return d.endY/2+100;})
+      //.attr("y", function(d,i) { var rounded = d3.round(d.end, 1); return slope(rounded) })
+      .attr("xml:space", "preserve")
+      .style("font-size", "1.5em")
+      .style("font-weight", "bold")
+      .style("fill","#255c69")
+      .style("z-index","9999")
+      .style("opacity","1.0")
+      .text(function(d) { return label_format(d.end) + " " + d.label; });
+      
+// tops
+    country
+      .append("text")
+      .filter(function(d){ return (d.label==top5data[4][0].label || d.label==top5data[3][0].label || d.label==top5data[2][0].label  )})
+      .classed("label end", true)
+      .attr("x", width-450)
+      .attr("y", function(d) {return d.endY/2+100;})
+      .attr("xml:space", "preserve")
+      .style("font-size", "1.5em")
+      .style("font-weight", "bold")
+      .style("fill","#aa4639")
+      .style("z-index","9999")
+      .style("opacity","1.0")
+      .text(function(d) { return label_format(d.end) + " " + d.label; });
+
+    // ** Slope lines
+    
+    country
+      .append("line")
+        .filter(function(d){ return (d.label!=bottom5data[0][0].label && d.label!=bottom5data[1][0].label && d.label!=bottom5data[2][0].label && d.label!=top5data[4][0].label && d.label!=top5data[3][0].label && d.label!=top5data[2][0].label)})
+      .classed("slope", function(d) { return d.start || d.end; })
+      .attr("x1", 260)
+      .attr("x2", width-460)
+      .attr("y1", function(d,i) {
+        return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
+      })
+      .attr("y2", function(d,i) {
+        return d.end && d.end ? d.endY/2 - font_size/2 + 100 : null;
+      });
+
+// bottoms
+    country
+      .append("line")
+        .filter(function(d){ return (d.label==bottom5data[0][0].label || d.label==bottom5data[1][0].label || d.label==bottom5data[2][0].label )})
+      .classed("slope", function(d) { return d.start || d.end; })
+      .attr("x1", 260)
+      .attr("x2", width-460)
+      .attr("y1", function(d,i) {
+        return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
+      })
+      .attr("y2", function(d,i) {
+        return d.end && d.end ? d.endY/2 - font_size/2 + 100 : null;
+      })
+      .style("stroke", "#255c69")
+      .style("stroke-width","2") ;
+
+// tops
+    country
+      .append("line")
+        .filter(function(d){ return (d.label==top5data[4][0].label || d.label==top5data[3][0].label || d.label==top5data[2][0].label
+ )})
+      .classed("slope", function(d) { return d.start || d.end; })
+      .attr("x1", 260)
+      .attr("x2", width-460)
+      .attr("y1", function(d,i) {
+        return d.start && d.end ? d.startY/2 - font_size/2 + 100 : null;
+      })
+      .attr("y2", function(d,i) {
+        return d.end && d.end ? d.endY/2 - font_size/2 + 100 : null;
+      })  
+      .style("stroke", "#aa4639")
+      .style("stroke-width","2") ;
+
+// mouse events
+    country
+      .on("mouseover", function(d,i) { 
+            return d3.select(this)
+                    .classed("over", true); 
+                })
+
+      .on("mouseout", function(d,i) { 
+            return d3.select(this)
+                    .classed("over", false); 
+                })
+
+      .on("click", function(d,i) {
+             d3.select(".clicked").classed("click",false);
+             d3.select(this).classed("click", true); 
+                });
+
+
+    return chart;
+
+		});
+
+	</script>
+</body>  
+
+
+</html>
